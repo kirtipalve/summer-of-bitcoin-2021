@@ -1,0 +1,4 @@
+https://github.com/marpit19/summer-of-bitcoin
+https://www.geeksforgeeks.org/topological-sorting/
+https://www.bitcoin.com/get-started/how-bitcoin-transactions-work/
+https://www.geeksforgeeks.org/csv-file-management-using-c/
