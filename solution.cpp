@@ -38,9 +38,24 @@ pair<string, TransactionDetails*> addTransactionInfo(vector<string>& trxInfo){
     trx->fee = stoi(trxInfo[1]); // 2nd element is the fee which is converted to integer from string
     trx->weight = stoi(trxInfo[2]); //3rd element is weight
     vector<string> pid; //vector to store parent ids
-    for (int i = 3; i < trxInfo.size(); i++){
+    if(trxInfo.size()==4){
+    stringstream ss(trxInfo[3]);
+     while (ss.good()) {
+        string substr;
+        getline(ss, substr, ';');
+        pid.push_back(substr);
+    }
+    }
+  
+    /*for (int i = 3; i < trxInfo.size(); i++){
         pid.push_back(trxInfo[i]);
     }
+      if(pid.size()>1){
+    cout<<"pid size is"<<pid.size()<<endl;
+}
+else{
+    cout<<"nope"<<endl;
+}*/
     trx->parents = pid;
     return {trxInfo[0], trx}; //returning in the form of id, transaction info
 
@@ -60,10 +75,10 @@ void readCSV(string filename, unordered_map<string, TransactionDetails*>& trx){
             trxDetails.push_back(word);
         }
         pair<string,TransactionDetails*> p = addTransactionInfo(trxDetails);
-        trx[p.first] = p.second; // hash map with the txid as index and transaction info as value stored at the specific index
+        trx[p.first] = p.second; // hash map with thecout<<"Transaction Count :" << ump.size() << "\n"; txid as index and transaction info as value stored at the specific index
     }
     fin.close();
-
+    cout<<"Transaction Count :"<< trx.size() << "\n";
     
 }
 
@@ -80,10 +95,13 @@ void getOutput(vector<string>& output, string filename){
 //function to check if a transaction is valid. A transaction is considered valid if its parents transactions appear before it
 bool isValidTransaction(TransactionDetails* trx,set<string>& included_trx_ids){
     //If all the parents of trx are present in included_trx_ids then it is valid
+    
     for(auto parent : trx->parents){
-        if(visited_trx_ids.find(parent) == visited_trx_ids.end())
+        
+        if(included_trx_ids.find(parent) == included_trx_ids.end())
             return false;
     }
+    ;
     return true;
 }
 
@@ -92,7 +110,7 @@ int main(){
 
     unordered_map<string, TransactionDetails *> trx; //map to store transaction details
     readCSV(input, trx);
-    set<pair<float, TransactionDetails *>, greater<pair<float, TransactionDetails *>>> transactionSet; //  to ensure the first parameter is sorted in descending
+    set<pair<float, TransactionDetails*>, greater<pair<float, TransactionDetails*>>> transactionSet; //  to ensure the first parameter is sorted in descending
     set<string> transaction_set_included; // this will include all trx which are included in block
     vector<string> output; // maintains order of output
     //we will prioritize transaction with high fee/weight values
@@ -102,12 +120,17 @@ int main(){
     int currentBlockWeight = 0;
     int totalFee = 0;
     while(!transactionSet.empty() && (currentBlockWeight < maxBlockWeight)){
+        //cout<<"First while loop entered"<<endl;
         bool found = false;
         for(auto itr = transactionSet.begin(); itr != transactionSet.end(); itr++){
+            //cout<<"for loop entered"<<endl;
             TransactionDetails* currentTransaction = (*itr).second;
             int currFee = currentTransaction->fee;
+            //cout<<"current fee is"<<currFee<<endl;
             int currWeight = currentTransaction->weight;
-            if(isValidTransaction(currentTransaction, visited_trx_ids) && currentBlockWeight + currWeight <= maxBlockWeight){
+            //cout<<visited_trx_ids.size()<<endl;
+            if(isValidTransaction(currentTransaction, transaction_set_included) && currentBlockWeight + currWeight <= maxBlockWeight){
+                //cout<<"check for valid"<<endl;
                 currentBlockWeight += currWeight;
                 transaction_set_included.insert(currentTransaction->tx_id);
                 output.push_back(currentTransaction->tx_id);
@@ -123,6 +146,7 @@ int main(){
     }
     cout << "Total fee in current block: " << totalFee << endl;
     cout << "Total weight in current block: " << currentBlockWeight << endl;
+    cout<<"Total transactions ids "<<output.size()<<endl;
     getOutput(output, "block.txt");
 
     return 0;
